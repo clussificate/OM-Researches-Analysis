@@ -65,14 +65,6 @@ def MergeWord(wordlist):
     """
     return " ".join(wordlist)
 
-def data_scaler(train, test):
-    """
-    数据标准化
-    """
-    ss = StandardScaler()
-    train_scale = ss.fit_transform(train)
-    test_scale = ss.transform(test)
-    return train_scale,test_scale
 
 def cross_validate(X_train, y_train, clf, paras):
     """

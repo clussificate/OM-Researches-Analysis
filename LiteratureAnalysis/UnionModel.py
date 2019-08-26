@@ -34,6 +34,15 @@ def get_label(trainset, testset, target):
     y_test = list(map(get_multiple_label, testset[target]))
     return np.array(y_train), np.array(y_test)
 
+def data_scaler(train, test):
+    """
+    数据标准化
+    """
+    ss = StandardScaler()
+    train_scale = ss.fit_transform(train)
+    test_scale = ss.transform(test)
+    save_model(ss, "model/ss")
+    return train_scale,test_scale
 
 def get_TfIdf(trainset, testset):
     """
@@ -43,6 +52,7 @@ def get_TfIdf(trainset, testset):
     trainTfIdf = TfidfVec.fit_transform(trainset)
     testTfIdf = TfidfVec.transform(testset)
     print("the shape of tfidf features: ",trainTfIdf.shape[1])
+    save_model(TfidfVec, "model/tfidf")
     return trainTfIdf.toarray(), testTfIdf.toarray()
 
 def get_LDA(trainset, testset):
@@ -58,6 +68,8 @@ def get_LDA(trainset, testset):
     X_trainLDA = lda.fit_transform(trainCntLs)
     X_testLDA = lda.transform(testCntLs)
     print("the shape of LDA features: ", X_trainLDA.shape[1])
+    save_model(CntVec, "model/CntVec")
+    save_model(lda, "model/LDA")
     return X_trainLDA, X_testLDA
 
 def train_model(X, y, strategy):
@@ -71,10 +83,12 @@ def train_model(X, y, strategy):
     if strategy=='ovr':  # OneVsRest strategy also known as BinaryRelevance strategy
         ovr = OneVsRestClassifier(clf)
         ovr.fit(X, y)
+        save_model(ovr, "model/ovr")
         return ovr
     elif strategy=='classifier_chains':
         cc = ClassifierChain(clf)
         cc.fit(X, y)
+        save_model(cc, "model/cc")
         return cc
     else:
         raise Exception("Correct strategies：ovr or classifier_chains")

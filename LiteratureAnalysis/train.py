@@ -115,7 +115,7 @@ def evaluation(y_test, preds):
 if __name__ =="__main__":
     # os.system("python init.py") # 重新加载原数据
     print("load data......")
-    filename = "data/Data_0730/alldata.xlsx"
+    filename = "data/Data_0730/all_trainset.xlsx"
     data= read_data(filename)
     print("preprocess data......")
     X_abs = preprocess(data,'N_ABS')

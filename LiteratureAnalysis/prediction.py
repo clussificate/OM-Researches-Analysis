@@ -29,11 +29,12 @@ def preprocess(data, content):
     X_ls_merge = [MergeWord(document) for document in X_ls]
     return X_ls_merge
 
-def save_predictions(data,preds, proba, filename, train_DOIs):
+def save_predictions(data,preds, proba, filename, train_DOIs,journal):
     train_DOIs = train_DOIs.values
     preds = pd.DataFrame(preds,columns=["Sign_Emp","Sign_Exp","Sign_Ana"])
     proba = pd.DataFrame(proba,columns=["Proba_Emp","Proba_Exp","Proba_Ana"])
     merge_data = pd.concat([data,preds,proba],axis =1)
+    merge_data['Journal']= journal
     merge_data['In_trainset'] = 'No'
 
     for i, value in enumerate(train_DOIs):
@@ -87,7 +88,8 @@ if __name__ =="__main__":
             proba = proba.toarray()
 
         save_predictions(X_data[['DOI','TITLE','KEY_WORDS','N_ABS']],
-                         preds,proba,filename.split(".")[0]+"_prediction.xlsx",train_DOI)
+                         preds,proba,filename.split(".")[0]+"_prediction.xlsx",
+                         train_DOI,journal)
 
         print("%s done!" %journal)
 

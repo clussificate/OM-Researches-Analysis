@@ -16,12 +16,14 @@ import nltk
 from tools import *
 import GetData
 from collections import Counter
+from sklearn.utils import shuffle
 
 lancaster_stemmer = nltk.LancasterStemmer()
 stop_words = GetData.get_stopwords("data/stopwords.txt")
 def read_data(filename):
     rawdata = pd.read_excel(filename)
-    return rawdata
+    shdata=shuffle(rawdata,random_state=1994)  # shuffle data
+    return shdata
 
 def preprocess(data, content):
 
@@ -108,11 +110,7 @@ def train_model(X, y, strategy):
 def evaluation(y_test, preds):
     print(classification_report(y_test, preds))
 
-def save_predictions(data,preds, proba, filename):
-    preds = pd.DataFrame(preds,columns=["Sign_Emp","Sign_Exp","Sign_Ana"])
-    proba = pd.DataFrame(proba,columns=["Proba_Emp","Proba_Exp","Proba_Ana"])
-    merge_data = pd.concat([data,preds,proba],axis =1)
-    merge_data.to_excel(filename,index = False)
+
 
 if __name__ =="__main__":
     # os.system("python init.py") # 重新加载原数据
@@ -124,6 +122,9 @@ if __name__ =="__main__":
     X_titkw = preprocess(data,['TITLE', 'KEY_WORDS'])
     # label
     target = np.array(list(map(get_multiple_label, data['TYPE'])))
+    # save DOIs of trainset
+    save_model(data['DOI'],"data/Data_0730/trian_DOIs")
+
     # 标签计数
     print("statistics of labels:")
     target2 = [''.join(list(map(str, e))) for e in target]
@@ -175,7 +176,4 @@ if __name__ =="__main__":
 
     print("the classification report of trainset:")
     evaluation(target, train_preds)
-    print("save predictions...")
-    save_predictions(data[['DOI', 'TITLE', 'KEY_WORDS', 'N_ABS','TYPE']],
-                     train_preds, train_proba, filename.split(".")[0] + "_prediction.xlsx")
     print("Done~!")

@@ -44,13 +44,13 @@ def get_single_label(label):
         return label
 
 
-def get_multiple_label(label):
+def get_multiple_label(data):
     """
     产生多标签
     """
     labels = ['EM', 'EX', 'T']
     output = []
-    split_label = sorted(label.strip().split("+"))
+    split_label = list(map(str.upper,sorted(data.strip().split("+"))))  # 注意都转成大写EM EX T
     for label in labels:
         if label in split_label:
             output.append(1)
@@ -98,6 +98,7 @@ def load_model(path):
 def merge_features(*features):
     """
     特征融合函数
+    左tfidf特征，右lda特征
     """
     return np.hstack(features)
 
@@ -117,8 +118,8 @@ def multiple_smote(X, y):
     # Import a dataset with X and multi-label y
     y = np.array(y)
     lp = LabelPowerset()
-    oversampler = ADASYN(random_state=1994, n_neighbors=1)
-    # oversampler = SMOTE(random_state=1994, k_neighbors=1)
+    # oversampler = ADASYN(random_state=1994, n_neighbors=2)
+    oversampler = SMOTE(random_state=1994, k_neighbors=2)
 
     # Applies the above stated multi-label (ML) to multi-class (MC) transformation.
     yt = lp.transform(y)

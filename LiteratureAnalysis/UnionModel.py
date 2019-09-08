@@ -48,7 +48,7 @@ def get_TfIdf(trainset, testset):
     """
     获取TfIdf特征
     """
-    TfidfVec = TfidfVectorizer(max_df=0.3, min_df=0.1, ngram_range=(1,2),stop_words='english')
+    TfidfVec = TfidfVectorizer(max_df=0.3, min_df=0.01, ngram_range=(1,2),stop_words='english')
     trainTfIdf = TfidfVec.fit_transform(trainset)
     testTfIdf = TfidfVec.transform(testset)
     print("the shape of tfidf features: ",trainTfIdf.shape[1])
@@ -73,6 +73,8 @@ def get_LDA(trainset, testset):
     return X_trainLDA, X_testLDA
 
 def train_model(X, y, strategy):
+    X = np.array(X)
+    y = np.array(y)
     # clf = SVC(C=1,kernel='rbf',probability=True, gamma='scale') # svc without class_weight
     # clf = SVC(C=10,kernel='rbf',class_weight='balanced',probability=True, gamma='scale')  # svc with class_weight
     clf = XGBClassifier(subsample=0.8, colsample_bytree=0.8)
@@ -127,10 +129,11 @@ if __name__ =="__main__":
 
     # 数据标准化
     X_train, X_test = data_scaler(X_train, X_test)
-    # y_train2 = [''.join(list(map(str, e))) for e in y_train]
 
-    # smote过采样
+    ## 标签计数
+    # y_train2 = [''.join(list(map(str, e))) for e in y_train]
     # print(sorted(Counter(y_train2).items()))
+
     oversampling = True
     if oversampling:
         print("oversampling: True")

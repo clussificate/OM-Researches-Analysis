@@ -17,7 +17,7 @@ def word_tokenize(string):
     """
     根据标点符号分词
     """
-    return re.split(r'[;,()\s\?\:-]\s*', string)
+    return re.split(r'[;’‘“”!；/,()\s\?\:\'\"]\s*', string)
 
 
 def del_tail_dot(word):

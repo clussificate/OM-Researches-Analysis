@@ -89,7 +89,7 @@ def train_model(X, y, strategy):
     y = np.array(y)
     # clf = SVC(C=1,kernel='rbf',probability=True, gamma='scale') # svc without class_weight
     # clf = SVC(C=10,kernel='rbf',class_weight='balanced',probability=True, gamma='scale')  # svc with class_weight
-    clf = XGBClassifier(subsample=0.8, colsample_bytree=0.8)
+    clf = XGBClassifier(subsample=0.8, colsample_bytree=0.8, max_depth=5,n_estimators=200)
     # clf = XGBClassifier(learning_rate=0.1, n_estimators=150, max_depth=5,
     #                     min_child_weight=1, gamma=0.1, subsample=0.8, colsample_bytree=0.8,
     #                     objective='binary:logistic', nthread=4, scale_pos_weight=1)
@@ -120,6 +120,9 @@ if __name__ =="__main__":
     print("preprocess data......")
     X_abs = preprocess(data,'N_ABS')
     X_titkw = preprocess(data,['TITLE', 'KEY_WORDS'])
+    # for i in range(len(X_titkw)):
+    #     print(X_titkw[i])
+
     # label
     target = np.array(list(map(get_multiple_label, data['TYPE'])))
     # save DOIs of trainset
@@ -146,7 +149,7 @@ if __name__ =="__main__":
 
     # smote过采样
     # print(sorted(Counter(y_train2).items()))
-    oversampling = False
+    oversampling = True
     if oversampling:
         print("oversampling: True")
         X_train, target = over_sampling(X_train,target,"multiple_label")

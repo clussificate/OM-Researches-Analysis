@@ -19,7 +19,6 @@ def word_tokenize(string):
     """
     return re.split(r'[;’‘“”!；/,()\s\?\:\'\"]\s*', string)
 
-
 def del_tail_dot(word):
     """
     删除单词某端的句号
@@ -43,12 +42,12 @@ def get_single_label(label):
     else:
         return label
 
-
-def get_multiple_label(data):
+def get_multiple_label(data,labels=None):
     """
     产生多标签
     """
-    labels = ['EM', 'EX', 'T']
+    if not labels:
+        labels = ['EM', 'EX', 'T']
     output = []
     split_label = list(map(str.upper,sorted(data.strip().split("+"))))  # 注意都转成大写EM EX T
     for label in labels:
@@ -65,7 +64,6 @@ def MergeWord(wordlist):
     """
     return " ".join(wordlist)
 
-
 def cross_validate(X_train, y_train, clf, paras):
     """
     网格搜索 + 交叉验证
@@ -77,7 +75,6 @@ def cross_validate(X_train, y_train, clf, paras):
     print("最优配置的得分：")
     print(grid_search.best_score_)
     return grid_search.best_estimator_
-
 
 def save_model(model, path):
     """
@@ -142,3 +139,9 @@ def over_sampling(X, y, sign):
     else:
         raise Exception("Correct label format：single_label or multiple_label")
     return X_sm, y_sm
+
+def params_seach(data, target, model,params):
+    model_tunning = GridSearchCV(model, cv=5, param_grid=params,
+                                 scoring='f1_weighted', n_jobs=-1)
+    model_tunning.fit(data,target)
+    return model_tunning

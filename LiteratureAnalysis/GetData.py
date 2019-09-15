@@ -5,17 +5,17 @@
 import numpy as np
 import pandas as pd
 
-def create_dataset(filename, trainpath, testpath,separator):
+def create_dataset(filename, targetname,trainpath, testpath):
     """
     生成测试集和训练集
     """
     rawdata = pd.read_excel(filename)
     # 去除无效数据
-    rawdata2 = rawdata[(rawdata['TYPE'] != 0) & (rawdata['TYPE'] != '0')]
-    trainset = rawdata2.sample(frac=0.9, random_state=1994, axis=0)
+    rawdata2 = rawdata[(rawdata[targetname] != 0) & (rawdata[targetname] != '0') & (rawdata[targetname] != ' ')]
+    trainset = rawdata2.sample(frac=0.9, axis=0)
     testset = rawdata2[~rawdata2.index.isin(trainset.index)]
-    trainset.to_csv(trainpath, sep=separator, index=None)
-    testset.to_csv(testpath, sep=separator, index=None)
+    trainset.to_excel(trainpath, index=None)
+    testset.to_excel(testpath, index=None)
 
 
 def load_dataset(trainsetpath, testsetpath, separator):

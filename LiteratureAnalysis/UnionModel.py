@@ -10,10 +10,7 @@ import pandas as pd
 from sklearn.metrics import classification_report
 from skmultilearn.problem_transform import ClassifierChain
 from sklearn.decomposition import LatentDirichletAllocation
-from sklearn.ensemble import GradientBoostingClassifier
-from sklearn.svm import SVC
 from sklearn.feature_extraction.text import TfidfVectorizer, CountVectorizer
-from collections import Counter
 from sklearn.multiclass import OneVsRestClassifier
 from xgboost import XGBClassifier
 

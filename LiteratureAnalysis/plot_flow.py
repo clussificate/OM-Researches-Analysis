@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Created on 2019/9/5 22:04
+Created on 2019/9/15 15:04
 
 @Author: Kurt
 
@@ -15,12 +15,12 @@ sns.set_context("paper",font_scale =1.25)
 
 def analysis(label):
     newlabel = ""
-    if label =="Sign_Emp":
-        newlabel = "Empirical"
-    if label =="Sign_Exp":
-        newlabel = "Experimental"
-    if label =="Sign_Ana":
-        newlabel = "Analytical"
+    if label =="Sign_F":
+        newlabel = "Fund flow"
+    if label =="Sign_I":
+        newlabel = "Information flow"
+    if label =="Sign_P":
+        newlabel = "Physical flow"
     return newlabel
 
 
@@ -48,7 +48,6 @@ def style_tri(data):
         # ax[i].xticks(rotation=45)
     plt.suptitle("The Chancing Trends", fontsize = 15)
     plt.subplots_adjust(hspace=0.5)
-    plt.show()
     plt.show()
     return None
 

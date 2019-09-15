@@ -20,6 +20,8 @@ from sklearn.utils import shuffle
 
 lancaster_stemmer = nltk.LancasterStemmer()
 stop_words = GetData.get_stopwords("data/stopwords.txt")
+
+
 def read_data(filename):
     rawdata = pd.read_excel(filename)
     shdata=shuffle(rawdata,random_state=1994)  # shuffle data
@@ -76,7 +78,6 @@ def get_LDA(data):
     CntVec = CountVectorizer(min_df=0.01, ngram_range=(1, 2))
     dataCntLs = CntVec.fit_transform(data)
     lda = LatentDirichletAllocation(n_components=100,
-                                    learning_offset=50.,
                                     random_state=0)
     dataLDA = lda.fit_transform(dataCntLs)
     print("the shape of LDA features: ", dataLDA.shape[1])
@@ -172,6 +173,7 @@ if __name__ =="__main__":
         train_proba = train_proba.toarray()
 
     # 效果评估
+
     print("results of trainset: ")
     print("-"*20)
     for x,y,z in zip(train_preds, train_proba, target):

@@ -49,6 +49,7 @@ def get_multiple_label(data,labels=None):
     if not labels:
         labels = ['EM', 'EX', 'T']
     output = []
+    data = str(data)
     split_label = list(map(str.upper,sorted(data.strip().split("+"))))  # 注意都转成大写EM EX T
     for label in labels:
         if label in split_label:
@@ -116,7 +117,7 @@ def multiple_smote(X, y):
     y = np.array(y)
     lp = LabelPowerset()
     # oversampler = ADASYN(random_state=1994, n_neighbors=2)
-    oversampler = SMOTE(random_state=1994, k_neighbors=2)
+    oversampler = SMOTE(random_state=1994, k_neighbors=5)
 
     # Applies the above stated multi-label (ML) to multi-class (MC) transformation.
     yt = lp.transform(y)
@@ -142,6 +143,11 @@ def over_sampling(X, y, sign):
 
 def params_seach(data, target, model,params):
     model_tunning = GridSearchCV(model, cv=5, param_grid=params,
-                                 scoring='f1_weighted', n_jobs=-1)
+                                 scoring='f1_micro', n_jobs=1)
     model_tunning.fit(data,target)
     return model_tunning
+
+def random_sampling(data, size):
+    data = data[data.In_trainset == 'No']
+    data = data.sample(size)
+    return data

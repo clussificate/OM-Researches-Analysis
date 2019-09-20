@@ -8,4 +8,4 @@ Created on 2019/7/28 0:27
 import GetData
 
 # 生成初始的训练集和测试集
-GetData.create_dataset("data/alldata.xlsx","data/trainset.csv", "data/testset.csv","|")
+_, _ = GetData.create_dataset("data/alldata.xlsx", 'TYPE',"data/trainset.csv", "data/testset.csv","|")

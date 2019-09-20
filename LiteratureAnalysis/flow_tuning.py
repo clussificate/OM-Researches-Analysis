@@ -21,6 +21,8 @@ from tools import *
 import GetData
 from collections import Counter
 import sklearn.utils as us
+from sklearn import metrics
+from sklearn.utils import  shuffle
 
 lancaster_stemmer = nltk.LancasterStemmer()
 stop_words = GetData.get_stopwords("data/stopwords.txt")
@@ -64,7 +66,7 @@ def get_TfIdf(data,train=True):
     获取TfIdf特征
     """
     if train:
-        TfidfVec = TfidfVectorizer(max_df=0.1, min_df=0.01, ngram_range=(1,1),stop_words='english')
+        TfidfVec = TfidfVectorizer(max_df=0.3,min_df=0.01, ngram_range=(1,2),stop_words='english')
         dataTfIdf = TfidfVec.fit_transform(data)
         save_model(TfidfVec, "model/flow/tfidf")
         return dataTfIdf.toarray()
@@ -80,8 +82,8 @@ def get_LDA(data, train=True):
     获取LDA特征
     """
     if train:
-        CntVec = CountVectorizer(min_df=0.01, ngram_range=(1,1))
-        lda = LatentDirichletAllocation(n_components=150,learning_method='batch',
+        CntVec = CountVectorizer(min_df=0.01, ngram_range=(1,1))  # best parameters
+        lda = LatentDirichletAllocation(n_components=200,learning_method='batch',
                                     random_state=0)
         data = CntVec.fit_transform(data)
         data = lda.fit_transform(data)
@@ -99,15 +101,15 @@ def get_LDA(data, train=True):
 
 def train_model(X, y, strategy):
     X = np.array(X)
-    y = np.array(y)
+    y = np.array(y,dtype=int)
     # clf = SVC(C=1,kernel='rbf',probability=True, gamma='scale')  # svc with class_weight  # 0.48
-    # clf = XGBClassifier(subsample=0.8, colsample_bytree=0.8, max_depth=9,n_estimators=300)  # 0.75
+    # clf = XGBClassifier(subsample=0.8, colsample_bytree=0.8, max_depth=9,n_estimators=50) # 0.75
     # clf = XGBClassifier(learning_rate=0.1, n_estimators=150, max_depth=5,
     #                     min_child_weight=1, gamma=0.1, subsample=0.8, colsample_bytree=0.8,
     #                     objective='binary:logistic', nthread=4, scale_pos_weight=1)
     # clf = RandomForestClassifier(max_depth=20, n_estimators=2000,n_jobs=-1)   # 0.58
-    clf = lightgbm.sklearn.LGBMClassifier(max_depth=9, num_leaves=600,
-                                          n_estimators=500,subsample=0.8,n_jobs=-1) # 0.8
+    clf = lightgbm.sklearn.LGBMClassifier(max_depth=9,num_leaves=600,
+                                          n_estimators=50, n_jobs=-1) # 0.8
     print(clf)
     if strategy=='ovr':  # OneVsRest strategy also known as BinaryRelevance strategy
         ovr = OneVsRestClassifier(clf)
@@ -122,39 +124,59 @@ def train_model(X, y, strategy):
     else:
         raise Exception("Correct strategies：ovr or classifier_chains")
 
-def evaluation(y_test, preds):
-    print(classification_report(y_test, preds))
+def evaluation(y_true, y_pred):
+    print(classification_report(y_true, y_pred))
+
+
+def downsampling(data, y, prop=0.5):
+    y = pd.Series([''.join(list(map(str, e))) for e in y], name='y')
+    data = pd.concat([data, y], axis=1)
+    data1 = data[data.y=='00']
+    data2 = data[~data.index.isin(data1.index)]
+    data1 = data1.sample(frac=prop, axis=0)
+    return_data = pd.concat([data1, data2],axis=0).reset_index()
+    return return_data
 
 
 if __name__=="__main__":
-    # GetData.create_dataset("data/Data_flow/rawdata.xlsx", 'FLOW', "data/Data_flow/trainset.xlsx",
+    # GetData.create_dataset_flow("data/Data_flow/rawdata.xlsx", "data/Data_flow/trainset.xlsx",
     #                        "data/Data_flow/testset.xlsx")
 
     train_name = "data/Data_flow/trainset.xlsx"
-    trainset= read_data(train_name)
+    trainset= read_data(train_name)[['DOI','TITLE','KEY_WORDS','N_ABS','FLOW']]
+
+    ## addend new samples
+    trainset_others_name = 'data/Data_flow/dataset_others.xlsx'
+    trainset_others = read_data(trainset_others_name)[['DOI','TITLE','KEY_WORDS','N_ABS','FLOW']]
+    trainset = shuffle(pd.concat([trainset, trainset_others], axis=0).reset_index())
+
+    y_train = np.array([get_multiple_label(x, ['F', 'I', 'P'])[:-1] for x in trainset['FLOW']])
+
+    # downsampling
+    # trainset = downsampling(trainset, y_train, prop=0.7)
+    # y_train = np.array([get_multiple_label(x, ['F', 'I', 'P'])[:-1] for x in trainset['FLOW']])
+
+    # save dois in transet
     save_model(trainset['DOI'], "data/Data_flow/trian_DOIs")
+
     print("preprocess data......")
-    X_train_abs = preprocess(trainset,'N_ABS')
-    X_train_titkw = preprocess(trainset,['TITLE', 'KEY_WORDS'])
-    y_train = [get_multiple_label(x, ['F','I','P']) for x in trainset['FLOW']]
-    # print(X_train_titkw[0:10])
-    # print(trainset.TITLE.head(10))
-    y_train = np.array([get_multiple_label(x, ['F','I','P']) for x in trainset['FLOW']])
-    # print(y_train[0:10])
+    X_train_abs = preprocess(trainset, 'N_ABS')
+    X_train_titkw = preprocess(trainset, ['TITLE', 'KEY_WORDS'])
+
+
+    # ## 标签计数
+    print("statistics of labels:")
+    target = [''.join(list(map(str, e))) for e in y_train]
+    print(sorted(Counter(target).items()))
 
     test_name = "data/Data_flow/testset.xlsx"
     testset= read_data(test_name, shuffle=False)
     X_test_abs = preprocess(testset, 'N_ABS')
     X_test_titkw = preprocess(testset, ['TITLE','KEY_WORDS'])
-    y_test = np.array([get_multiple_label(x, ['F', 'I', 'P']) for x in testset['FLOW']])
+    y_test = np.array([get_multiple_label(x, ['F', 'I', 'P'])[:-1] for x in testset['FLOW']])
     # print(testset[0:10])
     # print(X_test_titkw[0:10])
-    # print(y_test)
-
-    # 标签计数
-    print("statistics of labels:")
-    target = [''.join(list(map(str, e))) for e in y_train]
-    print(sorted(Counter(target).items()))
+    ## print(y_test)
 
     print("generating features......")
     X_train_abs = get_TfIdf(X_train_abs, train=True)
@@ -168,14 +190,14 @@ if __name__=="__main__":
     X_test_titkw = get_LDA(X_test_titkw, train=False)
     # print(X_test_titkw[0])
     # print(X_test_titkw.shape)
-
-    # merge data
+    #
+    ## merge data
     # print(X_train_abs.shape, X_train_titkw.shape)
     # print(X_test_abs.shape, X_test_titkw.shape)
     X_train_merge =  merge_features(X_train_abs , X_train_titkw)
     X_test_merge = merge_features(X_test_abs, X_test_titkw)
 
-    #scale data
+    ## scale data
     X_train = data_scaler(X_train_merge, train=True)
     X_test = data_scaler(X_test_merge,train=False)
 
@@ -183,41 +205,51 @@ if __name__=="__main__":
     if oversampling:
         print("oversampling: True")
         X_train, y_train = over_sampling(X_train,y_train,"multiple_label")
+        print("statistics of labels after oversampling:")
+        target = [''.join(list(map(str, e))) for e in y_train]
+        print(sorted(Counter(target).items()))
     else:
         print("oversampling: False")
 
-
-    #  cv only
-    # choose the random forests model for its fast speed.
+    ## cv only
+    ## choose the random forests model for its fast speed.
     # model = RandomForestClassifier(max_depth=3,n_estimators=1000,n_jobs=-1)
     # model = XGBClassifier(subsample=0.8,colsample_bytree=0.8,max_depth=9,n_estimators=50)
+    # model = lightgbm.sklearn.LGBMClassifier(max_depth=9, num_leaves=600,
+    #                                       n_estimators=50,n_jobs=-1)
     # print(model)
     # model = ClassifierChain(model)
-    # cv_results = cross_val_score(model, X=X_train, y=y_train, cv=5,scoring='f1_weighted', n_jobs=-1)
+    # cv_results = cross_val_score(model, X=X_train, y=y_train, cv=5,scoring='f1_micro', n_jobs=1)
     # print("5-kold cv results: ", np.mean(cv_results))
-
 
 
     # grid search + cv
     # params = {'classifier__max_depth': range(5, 10, 2),
-    #           'classifier__n_estimators': [50,100,150]}
-
+    #           'classifier__n_estimators': [50,100,150],
+    #           'classifier__subsample':[0.6, 0.8, 1],
+    #           'classifier__colsample_bytree':[0.6,0.8,0.1]}
+    # model = XGBClassifier(n_jobs=-1)
+    #
     # params = {'classifier__max_depth': range(3, 10, 2),
     #           'classifier__n_estimators': [100, 200, 300, 400],
     #           'classifier__max_features': ['auto', 'log2', 'sqrt']
     #           }
-
-    # model = XGBClassifier(subsample=0.8,colsample_bytree=0.8)
     # model = RandomForestClassifier(max_depth=3, n_estimators=1000,n_jobs=-1)
+    #
+    # params = {'classifier__max_depth': range(5, 10, 2),
+    #           'classifier__n_estimators': [100,200,300,400,500],
+    #           'classifier__subsample':[0.6, 0.8, 1]}
+    # model = lightgbm.sklearn.LGBMClassifier(num_leaves=32000)
     # print(model)
     # model = ClassifierChain(model)
     # cv_results = params_seach(X_train, y_train, model, params)
-    # print("best score:", cv_results.best_score_)
-    # print("best parameters:", cv_results.best_params_)
+    # print("the best score:", cv_results.best_score_)
+    # print("the best parameters:", cv_results.best_params_)
 
 
-    # hold-out evaluation
+    # # hold-out evaluation
     strategy = 'classifier_chains'
+    print("strategy: ",strategy)
     model =  train_model(X_train, y_train, strategy)
     train_preds = model.predict(X_train)
     train_proba = model.predict_proba(X_train)
@@ -225,11 +257,12 @@ if __name__=="__main__":
     test_proba = model.predict_proba(X_test)
     if strategy == 'classifier_chains':
         train_preds = train_preds.toarray()
+        # train_preds = np.array([list(map(int, x)) for x in train_preds])
         train_proba = train_proba.toarray()
         test_preds = test_preds.toarray()
         test_proba = test_proba.toarray()
 
-    # 效果评估
+    #     ## model evaluations
     # print("results of trainset: ")
     # print("-"*20)
     # for x,y,z in zip(train_preds, train_proba, y_train):
@@ -239,19 +272,8 @@ if __name__=="__main__":
     evaluation(y_train, train_preds)
     print("the classification report of testset:")
     evaluation(y_test, test_preds)
-
+    #
     # print("results of testset")
     # print("-" * 20)
     # for x,y,z in zip(test_preds, test_proba, y_test):
     #     print("pred: %s, proba: %s, label: %s" %(x, y, z))
-
-
-
-
-
-
-
-
-
-
-

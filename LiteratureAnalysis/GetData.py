@@ -18,6 +18,17 @@ def create_dataset(filename, targetname,trainpath, testpath):
     testset.to_excel(testpath, index=None)
 
 
+def create_dataset_flow(filename,trainpath, testpath):
+    """
+    生成测试集和训练集
+    """
+    rawdata = pd.read_excel(filename)
+    # 去除无效数据
+    trainset = rawdata.sample(frac=0.9, axis=0)
+    testset = rawdata[~rawdata.index.isin(trainset.index)]
+    trainset.to_excel(trainpath, index=None)
+    testset.to_excel(testpath, index=None)
+
 def load_dataset(trainsetpath, testsetpath, separator):
     """
     加载训练集和测试集

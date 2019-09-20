@@ -4,6 +4,8 @@ Created on 2019/9/15 10:04
 
 @Author: Kurt
 
+note that a sample may have no label, i.e., [0, 0, 0]
+
 """
 import pandas as pd
 from sklearn.ensemble import RandomForestClassifier
@@ -22,7 +24,6 @@ import GetData
 from collections import Counter
 import sklearn.utils as us
 import plot_flow
-
 
 
 lancaster_stemmer = nltk.LancasterStemmer()
@@ -107,7 +108,7 @@ def train_model(X, y, strategy):
     X = np.array(X)
     y = np.array(y)
     clf = lightgbm.sklearn.LGBMClassifier(max_depth=9, num_leaves=600,
-                                          n_estimators=500,subsample=0.8,n_jobs=-1) # 0.8
+                                          n_estimators=100,n_jobs=-1) # 0.8
     print(clf)
     if strategy=='ovr':  # OneVsRest strategy also known as BinaryRelevance strategy
         ovr = OneVsRestClassifier(clf)
@@ -183,63 +184,63 @@ def plot(filename, sigs):
 
 if __name__=="__main__":
     # Train process
-    # data = read_data("data/Data_flow/rawdata.xlsx")
+    data = read_data("data/Data_flow/rawdata.xlsx")
     # data = data[(data['FLOW'] != 0) & (data['FLOW'] != '0') & (data['FLOW'] != ' ')]
-    # # print(data.FLOW.value_counts())
-    # X_abs = preprocess(data, 'N_ABS')
-    # X_titkw = preprocess(data, ['TITLE', 'KEY_WORDS'])
-    # # label
-    # y_train = [get_multiple_label(x, ['F', 'I', 'P']) for x in data['FLOW']]
-    # # save DOIs of trainset
-    # save_model(data['DOI'], "data/Data_0730/trian_DOIs")
-    # # 标签计数
-    # print("statistics of labels:")
-    # target = [''.join(list(map(str, e))) for e in y_train]
-    # print(sorted(Counter(target).items()))
-    #
-    # # LDA for title and keywords
-    # X_titkw_lda = get_LDA(X_titkw)
-    #
-    # # TfIdf for abstrct
-    # X_abs_TfIdf = get_TfIdf(X_abs)
-    #
-    # print("generating features......")
-    # X_train_abs = get_TfIdf(X_abs, train=True)
-    # print("the shape of tfidf features: ", X_train_abs.shape[1])
-    #
-    # X_train_titkw = get_LDA(X_titkw, train=True)
-    # print("the shape of LDA features: ", X_train_titkw.shape[1])
-    #
-    # # merge data
-    # X_train_merge = merge_features(X_train_abs, X_train_titkw)
-    #
-    # # scale data
-    # X_train = data_scaler(X_train_merge, train=True)
-    #
-    # oversampling = True
-    # if oversampling:
-    #     print("oversampling: True")
-    #     X_train, y_train = over_sampling(X_train, y_train, "multiple_label")
-    # else:
-    #     print("oversampling: False")
+    # print(data.FLOW.value_counts())
+    X_abs = preprocess(data, 'N_ABS')
+    X_titkw = preprocess(data, ['TITLE', 'KEY_WORDS'])
+    # label
+    y = [get_multiple_label(x, ['F', 'I', 'P']) for x in data['FLOW']]
+    # save DOIs of trainset
+    save_model(data['DOI'], "data/Data_0730/trian_DOIs")
+    # 标签计数
+    print("statistics of labels:")
+    target = [''.join(list(map(str, e))) for e in y]
+    print(sorted(Counter(target).items()))
+
+    # LDA for title and keywords
+    X_titkw_lda = get_LDA(X_titkw)
+
+    # TfIdf for abstrct
+    X_abs_TfIdf = get_TfIdf(X_abs)
+
+    print("generating features......")
+    X_train_abs = get_TfIdf(X_abs, train=True)
+    print("the shape of tfidf features: ", X_train_abs.shape[1])
+
+    X_train_titkw = get_LDA(X_titkw, train=True)
+    print("the shape of LDA features: ", X_train_titkw.shape[1])
+
+    # merge data
+    X_train_merge = merge_features(X_train_abs, X_train_titkw)
+
+    # scale data
+    X = data_scaler(X_train_merge, train=True)
+
+    oversampling = True
+    if oversampling:
+        print("oversampling: True")
+        X, y = over_sampling(X, y, "multiple_label")
+    else:
+        print("oversampling: False")
 
     # Predict process
-    # strategy = 'classifier_chains'
-    # # model = train_model(X_train, y_train, strategy)
-    # # train_model(X_train, y_train, strategy)
-    # if strategy=='classifier_chains':
-    #     model = load_model("model/flow/cc")
-    # elif strategy=='ovr':
-    #     model = load_model("model/flow/ovr")
-    # else:
-    #     raise Exception("please input correct model path")
-    #
-    # print("make predictions on all data")
-    # journals = ["OR","MSOM","MS","POM","JOM"]
-    # make_predictions(journals, model)
+    strategy = 'classifier_chains'
+    # model = train_model(X_train, y, strategy)
+    train_model(X, y, strategy)
+    if strategy=='classifier_chains':
+        model = load_model("model/flow/cc")
+    elif strategy=='ovr':
+        model = load_model("model/flow/ovr")
+    else:
+        raise Exception("please input correct model path")
+
+    print("make predictions on all data")
+    journals = ["OR","MSOM","MS","POM","JOM"]
+    make_predictions(journals, model)
 
 
-    # plot process
+    ## plot process
     print("Draw trend diagrams.....")
     plot("data/Data_flow/all_prediction.xlsx", ['Sign_F', 'Sign_I', 'Sign_P'])
 

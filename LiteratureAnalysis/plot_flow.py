@@ -16,7 +16,7 @@ sns.set_context("paper",font_scale =1.25)
 def analysis(label):
     newlabel = ""
     if label =="Sign_F":
-        newlabel = "Fund flow"
+        newlabel = "Financial flow"
     if label =="Sign_I":
         newlabel = "Information flow"
     if label =="Sign_P":

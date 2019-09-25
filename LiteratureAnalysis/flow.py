@@ -25,21 +25,18 @@ from collections import Counter
 import sklearn.utils as us
 import plot_flow
 
-
 lancaster_stemmer = nltk.LancasterStemmer()
 stop_words = GetData.get_stopwords("data/stopwords.txt")
 
-def read_data(filename, shuffle=True):
+
+def read_data(filename, shuffle=False):
     rawdata = pd.read_excel(filename)
-    if not shuffle:
-        print('Shuffle: False')
-        return rawdata
-    print('Shuffle: True')
-    rawdata = us.shuffle(rawdata, random_state=1994)  # shuffle data
+    if shuffle:
+        rawdata = us.shuffle(rawdata,random_state=1994)  # shuffle data
     return rawdata
 
-def preprocess(data, content):
 
+def preprocess(data, content):
     # word tokenize
     X_wt = [word_tokenize(x) for x in GetData.get_content(data, content)]
     # 去停用词及文末句号
@@ -49,6 +46,7 @@ def preprocess(data, content):
     # 字符串列表连接
     X_ls_merge = [MergeWord(document) for document in X_ls]
     return X_ls_merge
+
 
 def data_scaler(data, train=True):
     """
@@ -66,12 +64,13 @@ def data_scaler(data, train=True):
     else:
         raise Exception("Input correct values of train: True or false")
 
+
 def get_TfIdf(data,train=True):
     """
     获取TfIdf特征
     """
     if train:
-        TfidfVec = TfidfVectorizer(max_df=0.1, min_df=0.01, ngram_range=(1,1),stop_words='english')
+        TfidfVec = TfidfVectorizer(max_df=0.3, min_df=0.01, ngram_range=(1, 1), stop_words='english')
         dataTfIdf = TfidfVec.fit_transform(data)
         save_model(TfidfVec, "model/flow/tfidf")
         return dataTfIdf.toarray()
@@ -87,9 +86,8 @@ def get_LDA(data, train=True):
     获取LDA特征
     """
     if train:
-        CntVec = CountVectorizer(min_df=0.01, ngram_range=(1,1))
-        lda = LatentDirichletAllocation(n_components=150,learning_method='batch',
-                                    random_state=0)
+        CntVec = CountVectorizer(min_df=0.01, ngram_range=(1, 1))
+        lda = LatentDirichletAllocation(n_components=200, learning_method='batch', random_state=0)
         data = CntVec.fit_transform(data)
         data = lda.fit_transform(data)
         save_model(CntVec, "model/flow/CntVec")
@@ -104,11 +102,12 @@ def get_LDA(data, train=True):
     else:
         raise Exception("Input correct values of train: True or false")
 
+
 def train_model(X, y, strategy):
     X = np.array(X)
     y = np.array(y)
-    clf = lightgbm.sklearn.LGBMClassifier(max_depth=9, num_leaves=600,
-                                          n_estimators=100,n_jobs=-1) # 0.8
+    clf = lightgbm.sklearn.LGBMClassifier(max_depth=9, num_leaves=500,
+                                          n_estimators=50, n_jobs=-1)  # 0.8
     print(clf)
     if strategy=='ovr':  # OneVsRest strategy also known as BinaryRelevance strategy
         ovr = OneVsRestClassifier(clf)
@@ -123,12 +122,14 @@ def train_model(X, y, strategy):
     else:
         raise Exception("Correct strategies：ovr or classifier_chains")
 
-def save_predictions(data,preds, proba, filename,journal):
-    preds = pd.DataFrame(preds,columns=["Sign_F","Sign_I","Sign_P"])
-    proba = pd.DataFrame(proba,columns=["Proba_F","Proba_I","Proba_P"])
-    merge_data = pd.concat([data,preds,proba],axis =1)
-    merge_data['Journal']= journal
-    merge_data.to_excel(filename,index = False)
+
+def save_predictions(data,preds, proba, filename, journal):
+    preds = pd.DataFrame(preds, columns=["Sign_F", "Sign_I", "Sign_P"])
+    proba = pd.DataFrame(proba, columns=["Proba_F", "Proba_I", "Proba_P"])
+    merge_data = pd.concat([data, preds, proba], axis=1)
+    merge_data['Journal'] = journal
+    merge_data.to_excel(filename, index=False)
+
 
 def make_predictions(journals, clf):
     print("load models:")
@@ -175,25 +176,31 @@ def make_predictions(journals, clf):
     all_data.to_excel('data/Data_flow/all_prediction.xlsx', index = False)
 
 
-def plot(filename, sigs):
-    data = pd.read_excel(filename)
-    data = plot_flow.process(data, sigs)
-    # plot_flow.style_tri(data)
-    plot_flow.style_one(data,sigs)
-
+# def plot(filename, sigs):
+#     data = pd.read_excel(filename)
+#     data = plot_flow.process(data, sigs)
+#     plot_flow.style_tri(data)
+#     plot_flow.style_one(data,sigs)
 
 if __name__=="__main__":
     # Train process
-    data = read_data("data/Data_flow/rawdata.xlsx")
+    data1 = read_data("data/Data_flow/rawdata.xlsx")[['DOI', 'TITLE', 'KEY_WORDS', 'N_ABS', 'FLOW']]
+    data2 = read_data('data/Data_flow/dataset_others_p.xlsx')[['DOI', 'TITLE', 'KEY_WORDS', 'N_ABS', 'FLOW']]
+    data3 = read_data("data/Data_flow/dataset_others 2.xlsx")[['DOI', 'TITLE', 'KEY_WORDS', 'N_ABS', 'FLOW']]
+    data = us.shuffle(pd.concat([data1, data2], axis=0)).reset_index()
+    save_model(data['DOI'], "data/Data_flow/trian_DOIs")
+
     # data = data[(data['FLOW'] != 0) & (data['FLOW'] != '0') & (data['FLOW'] != ' ')]
     # print(data.FLOW.value_counts())
     X_abs = preprocess(data, 'N_ABS')
     X_titkw = preprocess(data, ['TITLE', 'KEY_WORDS'])
     # label
-    y = [get_multiple_label(x, ['F', 'I', 'P']) for x in data['FLOW']]
+    y = np.array([get_multiple_label(x, ['F', 'I', 'P']) for x in data['FLOW']])
+
     # save DOIs of trainset
     save_model(data['DOI'], "data/Data_0730/trian_DOIs")
-    # 标签计数
+
+    # count labels
     print("statistics of labels:")
     target = [''.join(list(map(str, e))) for e in y]
     print(sorted(Counter(target).items()))
@@ -236,13 +243,14 @@ if __name__=="__main__":
         raise Exception("please input correct model path")
 
     print("make predictions on all data")
-    journals = ["OR","MSOM","MS","POM","JOM"]
+    journals = ["OR", "MSOM", "MS", "POM", "JOM"]
     make_predictions(journals, model)
 
 
+
     ## plot process
-    print("Draw trend diagrams.....")
-    plot("data/Data_flow/all_prediction.xlsx", ['Sign_F', 'Sign_I', 'Sign_P'])
+    # print("Draw trend diagrams.....")
+    # plot("data/Data_flow/all_prediction.xlsx", ['Sign_F', 'Sign_I', 'Sign_P'])
 
 
 

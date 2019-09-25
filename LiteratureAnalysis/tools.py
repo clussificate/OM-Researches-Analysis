@@ -117,7 +117,7 @@ def multiple_smote(X, y):
     y = np.array(y)
     lp = LabelPowerset()
     # oversampler = ADASYN(random_state=1994, n_neighbors=2)
-    oversampler = SMOTE(random_state=1994, k_neighbors=5)
+    oversampler = SMOTE(k_neighbors=2)
 
     # Applies the above stated multi-label (ML) to multi-class (MC) transformation.
     yt = lp.transform(y)

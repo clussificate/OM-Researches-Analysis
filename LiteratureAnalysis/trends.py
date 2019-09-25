@@ -17,10 +17,12 @@ def analysis(label):
     newlabel = ""
     if label =="Sign_Emp":
         newlabel = "Empirical"
-    if label =="Sign_Exp":
+    elif label =="Sign_Exp":
         newlabel = "Experimental"
-    if label =="Sign_Ana":
+    elif label =="Sign_Ana":
         newlabel = "Analytical"
+    else:
+        raise Exception("wrong label~!")
     return newlabel
 
 

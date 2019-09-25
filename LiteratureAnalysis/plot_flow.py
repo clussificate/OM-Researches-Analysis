@@ -10,24 +10,30 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 sns.set(style="whitegrid")
-sns.set_context("paper",font_scale =1.25)
+sns.set_context("paper", font_scale=1.25)
 
+plt.rc('xtick', labelsize=12)
+plt.rc('ytick', labelsize=12)
 
 def analysis(label):
-    newlabel = ""
-    if label =="Sign_F":
+    if label in ['Sign_F', 'Proba_F']:
         newlabel = "Financial flow"
-    if label =="Sign_I":
+
+    elif label in ["Sign_I", 'Proba_I']:
         newlabel = "Information flow"
-    if label =="Sign_P":
+
+    elif label in ["Sign_P", 'Proba_P']:
         newlabel = "Physical flow"
+
+    else:
+        raise Exception("wrong label")
+
     return newlabel
 
-
 def style_tri(data):
-    fig, ax = plt.subplots(3, 1)
     years = data.index
     names = data.columns[:-1]  # 去除掉year
+    fig, ax = plt.subplots(len(names), 1)
     for i, label in enumerate(names):
         cnt = data[label]
         sns.barplot(x=years, y=cnt, color="salmon", saturation=.5, ax=ax[i])
@@ -42,11 +48,13 @@ def style_tri(data):
             ax[i].annotate("%i" % p.get_height(), (p.get_x() + p.get_width() / 2., p.get_height()),
                            ha='center', va='center', fontsize=11, color='black', xytext=(0, 10),
                            textcoords='offset points')
-        ax[i].set_title("%s" % label)
+        ax[i].set_title("%s" % label,fontsize=22)
         ax[i].set_xlabel("")
         ax[i].set_ylabel("")
-        # ax[i].xticks(rotation=45)
-    plt.suptitle("The Chancing Trends", fontsize = 15)
+        ax[i].set_xticklabels(years,rotation=45)
+    # plt.suptitle("The Chancing Trends", fontsize = 15)
+    fig.text(0.5, 0.04, 'Year', ha='center',fontsize=24)
+    fig.text(0.06, 0.5, 'Count', va='center', fontsize=24, rotation='vertical')
     plt.subplots_adjust(hspace=0.5)
     plt.show()
     return None
@@ -72,7 +80,7 @@ def process(rawdata, sigs):
     max_year = rawdata.YEAR.max()
     newdata = pd.DataFrame(np.array(range(min_year, max_year + 1)), columns=['YEAR']).set_index('YEAR')
     for i, label in enumerate(sigs):
-        group =  rawdata[rawdata[label] == 1].groupby(['YEAR']).count().DOI.to_frame()
+        group = rawdata[rawdata[label] == 1].groupby(['YEAR']).count().DOI.to_frame()
         group.rename(columns={'DOI':analysis(label)},inplace= True)
         newdata = newdata.join(group)
 
@@ -81,12 +89,28 @@ def process(rawdata, sigs):
     return newdata
 
 
+def process_proba(rawdata, probas, thetas):
+    min_year = rawdata.YEAR.min()
+    max_year = rawdata.YEAR.max()
+    newdata = pd.DataFrame(np.array(range(min_year, max_year + 1)), columns=['YEAR']).set_index('YEAR')
+
+    for label, theta in zip(probas, thetas):
+        rawdata[label] = pd.Series(np.where(rawdata[label].values >= theta, 1, 0))
+
+    for i, label in enumerate(probas):
+        group = rawdata[rawdata[label] == 1].groupby(['YEAR']).count().DOI.to_frame()
+        group.rename(columns={'DOI': analysis(label)}, inplace=True)
+        newdata = newdata.join(group)
+
+    newdata = newdata.fillna(0)
+    newdata['YEAR'] = newdata.index
+    return newdata
+
 if __name__=="__main__":
-    data = pd.read_excel("data/Data_0730/all_prediction.xlsx")
+    data = pd.read_excel("data/Data_flow/all_prediction.xlsx")
     # print(data.info())
-    sigs = ['Sign_Emp', 'Sign_Exp', 'Sign_Ana']
-    # pros= ['Proba_Emp', 'Proba_Exp', 'Proba_Ana']
-    data = process(data,sigs)
-    print(data)
+    thetas = [0.5, 0.3]
+    probs=['Proba_F', 'Proba_I']
+    data = process_proba(data, probs, thetas)
     style_tri(data)
     # style_one(data,sigs)

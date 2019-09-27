@@ -10,8 +10,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 sns.set(style="whitegrid")
-sns.set_context("paper",font_scale =1.25)
+sns.set_context("paper", font_scale=1.25)
 
+plt.rc('xtick', labelsize=18)
+plt.rc('ytick', labelsize=18)
 
 def analysis(label):
     newlabel = ""
@@ -48,7 +50,7 @@ def style_tri(data):
         ax[i].set_xlabel("")
         ax[i].set_ylabel("")
         # ax[i].xticks(rotation=45)
-    plt.suptitle("The Chancing Trends", fontsize = 15)
+    # plt.suptitle("The Chancing Trends", fontsize = 15)
     plt.subplots_adjust(hspace=0.5)
     plt.show()
     plt.show()
@@ -56,17 +58,18 @@ def style_tri(data):
 
 def style_one(rawdata,sigs):
     data = rawdata.melt('YEAR', var_name='Type', value_name='Count')
-    g = sns.barplot(x='YEAR',y='Count',hue='Type',data=data)
+    g = sns.barplot(x='YEAR', y='Count', hue='Type', data=data)
 
     # modify legends
-    plt.title('The Chancing Trends',  fontsize = 15)
+    # plt.title('The Chancing Trends',  fontsize = 15)
     ax = plt.gca()
     ax.spines['top'].set_visible(False)
     ax.spines['right'].set_visible(False)
     ax.spines['bottom'].set_visible(False)
     ax.spines['left'].set_visible(False)
-    plt.xlabel("")
-    plt.ylabel("")
+    plt.legend(loc='best', prop={'size': 20})
+    plt.xlabel("Year", size=24)
+    plt.ylabel("Count", size=24)
     plt.show()
     return None
 
@@ -91,5 +94,5 @@ if __name__=="__main__":
     # pros= ['Proba_Emp', 'Proba_Exp', 'Proba_Ana']
     data = process(data,sigs)
     print(data)
-    style_tri(data)
-    # style_one(data,sigs)
+    # style_tri(data)
+    style_one(data,sigs)

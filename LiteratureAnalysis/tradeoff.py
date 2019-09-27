@@ -13,7 +13,7 @@ plt.rc('xtick', labelsize=30)
 plt.rc('ytick', labelsize=30)
 plt.rc('axes', labelsize=36)
 
-THETAS = np.linspace(0, 1, 11)
+THETAS = np.linspace(0, 1, 21)
 
 
 def merge(y_1, y_2):
@@ -47,7 +47,8 @@ if __name__ =="__main__":
     # y_test, test_proba = load_model("data/Data_flow/tradeoff-backup")
 
     print("performance before setting threshold")
-    print(classification_report(y_test[:, :-1], pred_label[:, :-1]))
+    # print(classification_report(y_test[:, :-1], pred_label[:, :-1]))
+    print(classification_report(y_test, pred_label))
 
     F = y_test[:, 0]
     proba_F = pred_proba[:, 0]

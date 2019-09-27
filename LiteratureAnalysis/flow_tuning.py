@@ -210,7 +210,7 @@ if __name__=="__main__":
     trainset_others_2 = read_data(trainset_others_name)[['DOI', 'TITLE', 'KEY_WORDS', 'N_ABS', 'FLOW']]
 
     trainset = shuffle(pd.concat([trainset, trainset_others, trainset_others_2], axis=0).reset_index())
-    y_train = np.array([get_multiple_label(x, ['F', 'I', 'P']) for x in trainset['FLOW']])
+    y_train = np.array([get_multiple_label(x, ['F', 'I', 'P'])[:-1] for x in trainset['FLOW']])
 
     # downsampling
     # trainset = downsampling(trainset, y_train, prop=0.3)
@@ -232,7 +232,7 @@ if __name__=="__main__":
     testset= read_data(test_name, shuffle=False)
     X_test_abs = preprocess(testset, 'N_ABS')
     X_test_titkw = preprocess(testset, ['TITLE','KEY_WORDS'])
-    y_test = np.array([get_multiple_label(x, ['F', 'I', 'P']) for x in testset['FLOW']])
+    y_test = np.array([get_multiple_label(x, ['F', 'I', 'P'])[:-1] for x in testset['FLOW']])
     # print(testset[0:10])
     # print(X_test_titkw[0:10])
     # # print(y_test)
@@ -332,7 +332,7 @@ if __name__=="__main__":
     evaluation(y_test, test_preds)
 
     # # save predictions
-    # save_model([y_test, test_proba], "data/Data_flow/tradeoff")
+    save_model([y_test, test_proba], "data/Data_flow/tradeoff")
 
     # print("results of testset")
     # print("-" * 20)

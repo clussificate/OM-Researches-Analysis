@@ -124,8 +124,10 @@ def train_model(X, y, strategy):
 
 
 def save_predictions(data,preds, proba, filename, journal):
-    preds = pd.DataFrame(preds, columns=["Sign_F", "Sign_I", "Sign_P"])
-    proba = pd.DataFrame(proba, columns=["Proba_F", "Proba_I", "Proba_P"])
+    # preds = pd.DataFrame(preds, columns=["Sign_F", "Sign_I", "Sign_P"])
+    # proba = pd.DataFrame(proba, columns=["Proba_F", "Proba_I", "Proba_P"])
+    preds = pd.DataFrame(preds, columns=["Sign_F", "Sign_I"])
+    proba = pd.DataFrame(proba, columns=["Proba_F", "Proba_I"])
     merge_data = pd.concat([data, preds, proba], axis=1)
     merge_data['Journal'] = journal
     merge_data.to_excel(filename, index=False)
@@ -195,7 +197,7 @@ if __name__=="__main__":
     X_abs = preprocess(data, 'N_ABS')
     X_titkw = preprocess(data, ['TITLE', 'KEY_WORDS'])
     # label
-    y = np.array([get_multiple_label(x, ['F', 'I', 'P']) for x in data['FLOW']])
+    y = np.array([get_multiple_label(x, ['F', 'I', 'P'])[: -1] for x in data['FLOW']])
 
     # save DOIs of trainset
     save_model(data['DOI'], "data/Data_0730/trian_DOIs")
@@ -246,9 +248,7 @@ if __name__=="__main__":
     journals = ["OR", "MSOM", "MS", "POM", "JOM"]
     make_predictions(journals, model)
 
-
-
-    ## plot process
+    # # plot process
     # print("Draw trend diagrams.....")
     # plot("data/Data_flow/all_prediction.xlsx", ['Sign_F', 'Sign_I', 'Sign_P'])
 

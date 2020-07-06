@@ -1,4 +1,4 @@
-# OM Research articles Analysis
+# OM Research Articles Analysis
 We analyzed the research trends for OM reseach articles in five top journals (MS, MSOM, OR, JOM, POM) from 1997 to 2018. 
 
 cite as: 
